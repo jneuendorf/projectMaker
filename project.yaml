@@ -1,0 +1,44 @@
+title: My Project
+
+navigation:
+    - home
+    - events
+    - people
+    - about
+
+singlePage: false
+
+# possible are: vertical, horizontal, table, box
+layout: vertical
+
+# more to come
+language: php
+
+# also possible is 'tables'
+# model name should be singular
+models:
+    user:
+        -
+            name:           "name"
+            type:           "string"
+            visibility:     "private"
+        -
+            name:           "firstName"
+            type:           "string"
+            visibility:     "protected"
+        -
+            name:           "age"
+            type:           "integer"
+    event:
+        -
+            name:   "name"
+        -
+            name:   "begin"
+        -
+            name:   "end"
+
+database:
+    domain:     "localhost"
+    user:       "root"
+    password:   ""
+    name:       "test_db"
