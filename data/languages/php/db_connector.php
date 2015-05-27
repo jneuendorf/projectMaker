@@ -17,40 +17,64 @@ class DBConnector {
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     // CONSTRUCTOR
     function __construct($domain, $user, $pw, $name) {
-        $this->domain       = $domain;
-        $this->user         = $user;
-        $this->pw           = $pw;
-        $this->name         = $name;
+        $this->domain   = $domain;
+        $this->user     = $user;
+        $this->pw       = $pw;
+        $this->name     = $name;
 
-        // $this->mysqli       = null;
-        $this->mysqli = new mysqli($domain, $user, $pw, $name);
+        $this->mysqli   = new mysqli($domain, $user, $pw, $name);
 
-        $this->connected    = false;
+        $this->connected = false;
     }
 
     public function connect() {
         // $this->mysqli = new mysqli($this->domain, $this->user, $this->pw, $this->name);
-        // TODO: ??
-        $htis->mysqli->open();
 
-        if($this->mysqli->connect_errno != 0) {
-            return false;
+        if (!$this->connected) {
+            // TODO: ??
+            $htis->mysqli->open();
+
+            if($this->mysqli->connect_errno != 0) {
+                return false;
+            }
+            $this->connected = true;
         }
-
-        $this->connected = true;
         return true;
     }
 
     public function disconnect()	{
-        if($this->mysqli->close()) {
-            $this->mysqli = null;
-            $this->connected = false;
-            return true;
+        if ($this->connected) {
+            if($this->mysqli->close()) {
+                $this->mysqli = null;
+                $this->connected = false;
+                return true;
+            }
         }
-
         return false;
     }
 
+    public function is_connected() {
+        return $this->connected === true;
+    }
+
+    public function query($query) {
+        if ($this->connected) {
+            return $this->mysqli->query($query);
+        }
+        return null;
+    }
+
+    public function force_query($query) {
+        if ($this->connected) {
+            return $this->mysqli->query($query);
+        }
+        else {
+            $this->connect();
+            $res = $this->mysqli->query($query);
+            $this->disconnect();
+            return $res;
+        }
+    }
 }
 
 

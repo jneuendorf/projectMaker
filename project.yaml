@@ -14,6 +14,9 @@ layout: vertical
 # more to come
 language: php
 
+#
+code_style: "snake"
+
 # also possible is 'tables'
 # model name should be singular
 models:
@@ -23,7 +26,7 @@ models:
             type:           "string"
             visibility:     "private"
         -
-            name:           "firstName"
+            name:           "first_name"
             type:           "string"
             visibility:     "protected"
         -
