@@ -13,14 +13,18 @@ layout: vertical
 
 # more to come
 language: php
+database_connector: "mysqli"
 
 #
 code_style: "snake"
+
 
 # also possible is 'tables'
 # model name should be singular
 models:
     user:
+        # optional. if not given 's' will be appended to the model name
+        plural: "users"
         -
             name:           "name"
             type:           "string"
