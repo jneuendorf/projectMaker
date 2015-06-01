@@ -1,39 +1,10 @@
-################################################################################
-# COMPILE VARS
-CC = g++
-COMPILE = $(CC) -c
 
-################################################################################
-# PROJECT VARS
-NAME = pmake
-SOURCES = main.o io.o
+coffee:
+	coffee --output data/files/js_includes --compile data/unprocessed/coffee
 
-################################################################################
-# build app
-make: $(SOURCES)
-	$(CC) -Wall $(SOURCES) -o $(NAME)
 
-remake: clean make
+compile: coffee
 
-main.o: main.hpp libs.hpp
-	$(COMPILE) main.cpp
-
-io.o: io.hpp libs.hpp
-	$(COMPILE) io.cpp
-
-# my_string.o: my_string.h
-# 	$(COMPILE) my_string.c
-
-################################################################################
-# RUN
-run: make
-	./pmake
-
-remakerun: clean make run
-
-################################################################################
-# CLEAN
-clean:
-	rm -f $(SOURCES)
-	rm -f $(NAME)
-	rm -f a.out
+run: compile
+	# sh main.sh
+	python3 main.py

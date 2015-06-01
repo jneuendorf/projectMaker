@@ -66,6 +66,12 @@ echo "<br><br>";
 
 $record->save();
 
+
+
+Record::find_by(array("id" => 6))[0]->remove();
+
+
+
 $db_connector->disconnect();
 
 

@@ -321,9 +321,6 @@ abstract class AbstractDBModel implements Model {
             static::$_db_connector->force_query(
                 "INSERT INTO ".(static::$_table_name)." VALUES (".implode(",", $values).");"
             );
-
-            echo "query = ";
-            echo "INSERT INTO ".(static::$_table_name)." VALUES (".implode(",", $values).");";
         }
         // already in DB => update
         else {
