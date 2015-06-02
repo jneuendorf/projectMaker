@@ -21,7 +21,11 @@ convert_string = None
 convert_case = None
 
 
-
+def read_file(filename):
+    file = open(filename, "r")
+    result = file.read()
+    file.close()
+    return result
 
 
 
@@ -91,53 +95,105 @@ def ctor_assignments(props, indentation):
 
 def define_routes(routes, mode, indentation):
     route_template = string.Template("""if ($check_vars) {
-    $$result = $output_pre;
+    $assign_vars
 
+    // output format: $format
     echo $output;
     exit(0);
 }
 """)
 
-    # for data in routes:
-    #     type    = data["type"]
-    #     route   = data["to"]
-    #     format  = "format" in data ? data["format"] : "string"
-    #
-    #     # parse route
-    #     route_details = route.split("#")
+    result  = """
+require_once "controllers/ApiController.php";
 
-    result  = """<?php
+$api_controller = new ApiController();
 """
     indentation = " " * indentation
 
     for type in routes:
         result = result + "\n// " + type.upper() + " REQUESTS\n"
-        requrest_var = "$_" + type.upper()
+        request_var = "$_" + type.upper()
 
         routes_data = routes[type]
         for route in routes_data:
-            params = routes_data[route]
+            params = dict(routes_data[route])
 
-            format = "string"
-            for param in params:
-                if "format" in param:
-                    format = param["format"]
-                    params.remove(param)
-                    break
+            if "format" not in params:
+                format = "string"
+            else:
+                format = params["format"]
+                del params["format"]
 
-            check_vars = " && ".join("isset(" + requrest_var + "[\"" + param + "\"])" for param in params)
+
+
+            check_vars = " && ".join("isset(" + request_var + "[\"" + param + "\"])" for param in params)
+
+            check_vars = request_var + "[\"route\"] === \"" + route + "\" && " + check_vars
+
+            api_controller_call = "$api_controller->" + route + "(array(" + (", ".join("\"" + param + "\" => $" + param for param in params)) + "))"
 
             result += route_template.substitute(
                 check_vars = check_vars,
-                output_pre = "\"\"" if format == "string" else "array()",
-                output = "$result" if format == "string" else "json_encode($result)"
+                assign_vars = "\n    ".join("$" + param + " = (" + params[param] + ") " + request_var + "[\"" + param + "\"];" for param in params),
+                format = format,
+                output = api_controller_call if format == "string" else "json_encode(" + api_controller_call + ")"
             )
-
-    print(result)
 
     return result
 
+def make_api_controller(routes):
+    controller_template = string.Template("""<?php
 
+// require_once "../models/require_all.php";
+
+class ApiController {
+
+    public function __construct() {
+
+    }
+
+$define_controller_functions
+
+}
+
+?>""")
+
+    func_template = string.Template("""
+    public function $func_name($$params) {
+$assign_vars
+
+        $$result = $pre_output;
+
+        return $$result;
+    }
+""")
+
+    funcs = ""
+
+    for type in routes:
+        routes_data = routes[type]
+        for route in routes_data:
+            params = dict(routes_data[route])
+
+            if "format" not in params:
+                format = "string"
+            else:
+                format = params["format"]
+                del params["format"]
+
+            assign_vars = ""
+            for param in params:
+                assign_vars = assign_vars + "        $" + param + " = $params[\"" + param + "\"];\n"
+
+            funcs = funcs + func_template.substitute(
+                func_name = route,
+                assign_vars = assign_vars,
+                pre_output = "\"\"" if format == "string" else "array()"
+            )
+
+    return controller_template.substitute(
+        define_controller_functions = funcs
+    )
 
 ##################################################################################################################
 ##################################################################################################################
@@ -161,7 +217,7 @@ $$db_connector = new $connector_class("$domain", "$user", "$password", "$db_name
     model_template = string.Template("""<?php
 
 require_once "../includes/init.php";
-require_once "Model.php";
+require_once "../includes/Model.php";
 
 class $class_name extends AbstractDBModel {
 $declare_properties
@@ -199,39 +255,18 @@ $class_name::init($$db_connector, "$table_name");
         db_name     = config["database"]["name"],
     )
 
-    print("init.php:")
-    print(db_connector_code)
-
-
     result = {
-        "php_includes": {
-            "init.php": db_connector_code
+        "controllers": {},
+        "includes": {
+            "init.php":                 db_connector_code,
+            "DBConnector.php":          read_file("./data/languages/php/DBConnector.php"),
+            "MySQLiDBConnector.php":    read_file("./data/languages/php/MySQLiDBConnector.php"),
+            "PDODBConnector.php":       read_file("./data/languages/php/PDODBConnector.php"),
+            "Model.php":                read_file("./data/languages/php/Model.php")
         },
-        "index": {}, # top level files
+        "index":    {}, # top level files
         "models":   {}
     }
-
-
-    # # TODO: move code_style stuff to main (and accessibility here!)
-    # code_style = config["code_style"] if "code_style" in config else "snake"
-    #
-    # if code_style == "snake":
-    #     def _convert_string(s):
-    #         return string_to_snake_case(s)
-    #     def _convert_case(s):
-    #         return camel_to_snake_case(s)
-    # else:
-    #     def _convert_string(s):
-    #         return string_to_camel_case(s)
-    #     def _convert_case(s):
-    #         return snake_to_camel_case(s)
-    #
-    # global convert_string
-    # convert_string = _convert_string
-    #
-    # global convert_case
-    # convert_case = _convert_case
-
 
     ##############################################################################################################
     # MODELS
@@ -259,11 +294,19 @@ $class_name::init($$db_connector, "$table_name");
             table_name                  = table_name
         )
 
-        # print(model_code)
-        result["models"][model_name.lower() + ".php"] = model_code
+        result["models"][class_name.lower() + ".php"] = model_code
+
+    require = "<?php\n\n"
+    for model_file_name in result["models"]:
+        require = require + "require_once \"" + model_file_name + "\";\n"
+
+    require = require + "\n ?>"
+
+
+    result["models"]["require_all.php"] = require
 
     ##############################################################################################################
-    # API
+    # API (+ CONTROLLER)
     if "routes" in config:
         routes_config = config["routes"]
         routing_mode = config["routing"] if "routing" in config else "simple"
@@ -271,5 +314,18 @@ $class_name::init($$db_connector, "$table_name");
         result["index"]["api.php"] = api_template.substitute(
             define_routes = define_routes(routes_config, routing_mode, 0)
         )
+
+        result["controllers"]["ApiController.php"] = make_api_controller(routes_config)
+
+    ##############################################################################################################
+    # CONTROLLERS
+    if "controllers" in config:
+        controllers = config["controllers"]
+        for controller in controllers:
+            result["controllers"][controller + ".php"] = """<?php
+
+require_once "../models/require_all.php";
+
+?>"""
 
     return result

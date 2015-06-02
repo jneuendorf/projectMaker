@@ -40,7 +40,6 @@ config_raw = config_file.read()
 config_file.close()
 
 config = yaml.load(config_raw)
-# print(config)
 
 project_name = config["title"]
 language = config["language"] if "language" in config else "php"
@@ -54,7 +53,6 @@ out_dir = out_dir + "/" + project_name
 
 
 module = importlib.import_module("data.languages." + language)
-# print(dir(module))
 data = module.create_code(config)
 
 # write code files
@@ -69,3 +67,5 @@ for folder in data:
         file = open(out_dir + "/" + folder + "/" + filename, "xt")
         file.write(code)
         file.close()
+
+    print("..." + folder + " done...")

@@ -64,13 +64,20 @@ routes:
     # => api/php?route=get_route1&first_name=ASDF&last_name=BSDF
     get:
         get_route1:
-            - first_name
-            - last_name
-            - format: json
+            first_name: string
+            last_name : string
+            percentage: number
+            age:        integer
+            valid:      boolean
+            numbers:    array
+            format:     json
         get_route2:
-            - action
+            action: string
     post:
         post_route1:
-            - key
+            key:    string
         post_route2:
-            - data
+            data:   string
+
+controllers:
+    - TestController
