@@ -58,7 +58,7 @@ shell_p("cp -R ./data/files '" + out_dir + "'")
 jquery_name = "jquery-" + config["jQuery"]
 config["jQuery_name"] = jquery_name
 
-if not os.path.isdir("./data/jQuery/" + jquery_name):
+if not os.path.exists("./data/jQuery/" + jquery_name + ".min.js"):
     shell_p("curl -o ./data/jQuery/" + jquery_name + ".min.js 'http://code.jquery.com/" + jquery_name + ".min.js'")
     shell_p("curl -o ./data/jQuery/" + jquery_name + ".js 'http://code.jquery.com/" + jquery_name + ".js'")
 
