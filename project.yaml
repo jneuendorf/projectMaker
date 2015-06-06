@@ -1,22 +1,25 @@
 title: My Project
 
+# aka. 'views'
 navigation:
     - home
     - events
     - people
     - about
 
+# use ajax calls for content loading or not
 singlePage: false
 
-# possible are: vertical, horizontal, table, box
-layout: vertical
+jQuery: 1.11.3
+
+# # possible are: vertical, horizontal, table, box
+# layout: vertical
 
 # more to come
 language: php
 database_connector: mysqli
 
-#
-code_style: snake
+# code_style: snake
 
 
 # also possible is 'tables'
@@ -55,13 +58,7 @@ routing: simple
 
 # get "master_report/:id", :to => "api#master_report", :format => 'json'
 routes:
-    # -
-    #     type:   get
-    #     from:   api/test1
-    #     to:     api#test1
-    #     # optional. possible is 'json', 'string'. default is 'string'
-    #     format: json
-    # => api/php?route=get_route1&first_name=ASDF&last_name=BSDF
+    # => api.php?route=get_route1&first_name=ASDF&last_name=BSDF
     get:
         get_route1:
             first_name: string
