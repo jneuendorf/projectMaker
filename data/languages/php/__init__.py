@@ -54,7 +54,8 @@ def define_getters_and_setters(props, indentation):
     template = string.Template(
         indentation + "public function $setter_name($$$var_name) {\n" +
         indentation + "    $$this->$var_name = $$$var_name;\n" +
-        indentation + "    return $$this;\n\n" +
+        indentation + "    return $$this;\n" +
+        indentation + "}\n\n" +
         indentation + "public function $getter_name() {\n" +
         indentation + "    return $$this->$$$var_name;\n" +
         indentation + "}\n\n"
@@ -62,8 +63,6 @@ def define_getters_and_setters(props, indentation):
 
     for prop in props:
         res += template.substitute(
-            # setter_name = convert_case("set_" + prop["name"]),
-            # getter_name = convert_case("get_" + prop["name"]),
             setter_name = "set_" + prop["name"],
             getter_name = "get_" + prop["name"],
             var_name    = prop["name"],
@@ -256,8 +255,8 @@ $$db_connector = new $connector_class("$domain", "$user", "$password", "$db_name
 
     model_template = string.Template("""<?php
 
-require_once "../includes/init.php";
-require_once "../includes/Model.php";
+require_once "includes/init.php";
+require_once "includes/Model.php";
 
 class $class_name extends AbstractDBModel {
 $declare_properties
@@ -370,9 +369,18 @@ $class_name::init($$db_connector, "$table_name");
         for controller in controllers:
             result["controllers"][controller + ".php"] = """<?php
 
-require_once "../models/require_all.php";
+require_once "models/require_all.php";
 
 ?>"""
+
+    require = "<?php\n\n"
+    for controller_name in result["controllers"]:
+        require = require + "require_once \"" + controller_name + "\";\n"
+
+    require = require + "\n ?>"
+
+
+    result["controllers"]["require_all.php"] = require
 
     ##############################################################################################################
     # VIEWS
@@ -380,7 +388,10 @@ require_once "../models/require_all.php";
 
 ?>
 <!-- STYLESHEETS -->
-<link rel="stylesheet" type="text/css" href="" media="screen" />
+<link rel="stylesheet" type="text/css" media="screen" href="css/general.css" />
+<link rel="stylesheet" type="text/css" media="screen" href="css/header.css" />
+<link rel="stylesheet" type="text/css" media="screen" href="css/content.css" />
+<link rel="stylesheet" type="text/css" media="screen" href="css/footer.css" />
 
 <!-- JAVASCRIPT -->
 <script type="text/javascript" src="js_includes/$jquery_name.min.js"></script>
@@ -389,5 +400,14 @@ require_once "../models/require_all.php";
 """).substitute(
         jquery_name = config["jQuery_name"]
     )
+
+    if "views" in config:
+        views = config["views"]
+        for view in views:
+            result["views"][view + ".php"] = """<?php
+
+require_once "controllers/require_all.php";
+
+?>"""
 
     return result

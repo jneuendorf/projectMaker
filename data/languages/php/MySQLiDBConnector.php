@@ -18,7 +18,7 @@ class MySQLiDBConnector implements DBConnector {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     // CONSTRUCTOR
-    function __construct($domain, $user, $pw, $name) {
+    public function __construct($domain, $user, $pw, $name) {
         $this->domain   = $domain;
         $this->user     = $user;
         $this->pw       = $pw;
@@ -86,11 +86,18 @@ class MySQLiDBConnector implements DBConnector {
     }
 
     public function fetch_all() {
-        return $this->lastStatement->fetch_all();
+        if ($this->lastStatement !== NULL && $this->lastStatement !== FALSE) {
+            return $this->lastStatement->fetch_all();
+        }
+        return array();
     }
 
     public function fetch_fields() {
-        return $this->lastStatement->fetch_fields();
+        if ($this->lastStatement !== NULL && $this->lastStatement !== FALSE) {
+            return $this->lastStatement->fetch_fields();
+        }
+
+        return array();
     }
 }
 

@@ -49,18 +49,21 @@ config = yaml.load(config_raw)
 project_name = config["title"]
 language = config["language"] if "language" in config else "php"
 
-
-# create folder structure
-shell_p("cp -R ./data/files '" + out_dir +  "/" + project_name + "'")
-
 out_dir = out_dir + "/" + project_name
 
+# create folder structure
+shell_p("cp -R ./data/files '" + out_dir + "'")
+
 # get jQuery
-# curl -o example.html www.example.com
 jquery_name = "jquery-" + config["jQuery"]
 config["jQuery_name"] = jquery_name
-shell_p("curl -o '" + out_dir + "/js_includes/" + jquery_name + ".min.js' 'http://code.jquery.com/" + jquery_name + ".min.js'")
-shell_p("curl -o '" + out_dir + "/js_includes/" + jquery_name + ".js' 'http://code.jquery.com/" + jquery_name + ".js'")
+
+if not os.path.isdir("./data/jQuery/" + jquery_name):
+    shell_p("curl -o ./data/jQuery/" + jquery_name + ".min.js 'http://code.jquery.com/" + jquery_name + ".min.js'")
+    shell_p("curl -o ./data/jQuery/" + jquery_name + ".js 'http://code.jquery.com/" + jquery_name + ".js'")
+
+shell_p("cp ./data/jQuery/" + jquery_name + ".min.js '" + out_dir + "/js_includes/'")
+shell_p("cp ./data/jQuery/" + jquery_name + ".js '" + out_dir + "/js_includes/'")
 
 
 module = importlib.import_module("data.languages." + language)

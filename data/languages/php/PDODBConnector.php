@@ -18,7 +18,7 @@ class PDODBConnector implements DBConnector {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////
     // CONSTRUCTOR
-    function __construct($domain, $user, $pw, $name) {
+    public function __construct($domain, $user, $pw, $name) {
         $this->domain   = $domain;
         $this->user     = $user;
         $this->pw       = $pw;

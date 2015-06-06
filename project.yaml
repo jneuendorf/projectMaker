@@ -1,14 +1,10 @@
 title: My Project
 
-# aka. 'views'
-navigation:
+views:
     - home
     - events
     - people
     - about
-
-# use ajax calls for content loading or not
-singlePage: false
 
 jQuery: 1.11.3
 
@@ -19,10 +15,7 @@ jQuery: 1.11.3
 language: php
 database_connector: mysqli
 
-# code_style: snake
 
-
-# also possible is 'tables'
 # model name should be singular
 models:
     user:
@@ -51,7 +44,7 @@ database:
     domain:     localhost
     user:       root
     password:   ""
-    name:       test_db
+    name:       test
 
 # more to come: 'advanced' => frontend routing help
 routing: simple
