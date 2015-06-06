@@ -12,7 +12,9 @@
 
 (function() {
   window.Router = (function() {
-    var _transformGetURL, _transformPostURL;
+    var CLASS, _transformGetURL, _transformPostURL;
+
+    CLASS = Router;
 
     function Router() {
       this.prefix = "api/";
@@ -55,6 +57,14 @@
         };
       }
       return $.post("api.php", params, callback);
+    };
+
+    Router.prototype.get = function() {
+      return CLASS.get.apply(this, arguments);
+    };
+
+    Router.prototype.post = function() {
+      return CLASS.post.apply(this, arguments);
     };
 
     return Router;

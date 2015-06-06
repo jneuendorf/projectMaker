@@ -58,6 +58,7 @@ out_dir = out_dir + "/" + project_name
 # get jQuery
 # curl -o example.html www.example.com
 jquery_name = "jquery-" + config["jQuery"]
+config["jQuery_name"] = jquery_name
 shell_p("curl -o '" + out_dir + "/js_includes/" + jquery_name + ".min.js' 'http://code.jquery.com/" + jquery_name + ".min.js'")
 shell_p("curl -o '" + out_dir + "/js_includes/" + jquery_name + ".js' 'http://code.jquery.com/" + jquery_name + ".js'")
 

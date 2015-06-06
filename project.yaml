@@ -63,7 +63,7 @@ routes:
         get_route1:
             first_name: string
             last_name : string
-            percentage: number
+            percentage: float
             age:        integer
             valid:      boolean
             numbers:    array

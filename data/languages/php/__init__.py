@@ -128,7 +128,7 @@ $api_controller = new ApiController();
 
             check_vars = " && ".join("isset(" + request_var + "[\"" + param + "\"])" for param in params)
 
-            check_vars = request_var + "[\"route\"] === \"" + route + "\" && " + check_vars
+            check_vars = "isset(" + request_var + "[\"route\"]) && " + request_var + "[\"route\"] === \"" + route + "\" && " + check_vars
 
             api_controller_call = "$api_controller->" + route + "(array(" + (", ".join("\"" + param + "\" => $" + param for param in params)) + "))"
 
@@ -202,6 +202,46 @@ $assign_vars
 
 def create_code(config):
 
+    index_template = """<?php
+    // session_start();
+    require_once "includes/functions.php";
+
+    $page = "home";
+
+    if (isset($_REQUEST['page'])) {
+        $page = $_REQUEST['page'];
+        if (!logged_in() && !in_array($page, array("home", "kontakt", "impressum"))) {
+            $page = "home";
+        }
+    }
+
+    ?>
+    <!DOCTYPE html>
+    <html>
+        <?php
+            require_once "views/head.php";
+        ?>
+        <body>
+            <div id="page">
+                <div id="header"></div>
+
+                <div id="content">
+                    <?php
+                        if (file_exists("views/$page.php")) {
+                            require_once "views/$page.php";
+                        }
+                        else {
+                            require_once "views/home.php";
+                        }
+                    ?>
+                </div>
+
+                <div id="footer"></div>
+            </div>
+        </body>
+    </html>
+"""
+
     db_connector_template = string.Template("""<?php
 
 require_once "$connector_class.php";
@@ -262,11 +302,17 @@ $class_name::init($$db_connector, "$table_name");
             "DBConnector.php":          read_file("./data/languages/php/DBConnector.php"),
             "MySQLiDBConnector.php":    read_file("./data/languages/php/MySQLiDBConnector.php"),
             "PDODBConnector.php":       read_file("./data/languages/php/PDODBConnector.php"),
-            "Model.php":                read_file("./data/languages/php/Model.php")
+            "Model.php":                read_file("./data/languages/php/Model.php"),
+            "functions.php":            """<?php
+// define your functions here
+?>"""
         },
         "index":    {}, # top level files
-        "models":   {}
+        "models":   {},
+        "views":    {}
     }
+
+    result["index"]["index.php"] = index_template
 
     ##############################################################################################################
     # MODELS
@@ -327,5 +373,21 @@ $class_name::init($$db_connector, "$table_name");
 require_once "../models/require_all.php";
 
 ?>"""
+
+    ##############################################################################################################
+    # VIEWS
+    result["views"]["head.php"] = string.Template("""<?php
+
+?>
+<!-- STYLESHEETS -->
+<link rel="stylesheet" type="text/css" href="" media="screen" />
+
+<!-- JAVASCRIPT -->
+<script type="text/javascript" src="js_includes/$jquery_name.min.js"></script>
+<script type="text/javascript" src="js_includes/Router.js"></script>
+
+""").substitute(
+        jquery_name = config["jQuery_name"]
+    )
 
     return result

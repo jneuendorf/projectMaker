@@ -8,6 +8,8 @@
 *###
 class window.Router
 
+    CLASS = @
+
     # CONSTRUCTOR
     constructor: () ->
         @prefix = "api/"
@@ -51,6 +53,12 @@ class window.Router
                 route: route
 
         return $.post "api.php", params, callback
+
+    get: () ->
+        CLASS.get.apply(@, arguments)
+    
+    post: () ->
+        CLASS.post.apply(@, arguments)
 
 
 window.router = new Router()

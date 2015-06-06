@@ -5,8 +5,8 @@ coffee:
 
 compile: coffee
 
+clean:
+	rm -R 'My Project'
 
-
-run: compile
-	# sh main.sh
+run: clean compile
 	python3 main.py
