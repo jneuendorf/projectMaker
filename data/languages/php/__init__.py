@@ -92,25 +92,105 @@ def ctor_assignments(props, indentation):
     return "\n".join((indentation + "$this->" + prop["name"] + " = $" + prop["name"] + ";") for prop in props)
 
 
+# def define_routes(routes, mode, indentation):
+#     route_template = string.Template("""if ($check_vars) {
+#     $assign_vars
+#
+#     // output format: $format
+#     echo $output;
+#     exit(0);
+# }
+# """)
+#
+#     result  = """
+# require_once "controllers/ApiController.php";
+#
+# $api_controller = new ApiController();
+# """
+#     indentation = " " * indentation
+#
+#     for type in routes:
+#         result = result + "\n// " + type.upper() + " REQUESTS\n"
+#         request_var = "$_" + type.upper()
+#
+#         routes_data = routes[type]
+#         for route in routes_data:
+#             params = dict(routes_data[route])
+#
+#             if "format" not in params:
+#                 format = "string"
+#             else:
+#                 format = params["format"]
+#                 del params["format"]
+#
+#
+#
+#             check_vars = " && ".join("isset(" + request_var + "[\"" + param + "\"])" for param in params)
+#
+#             check_vars = "isset(" + request_var + "[\"route\"]) && " + request_var + "[\"route\"] === \"" + route + "\" && " + check_vars
+#
+#             api_controller_call = "$api_controller->" + route + "(array(" + (", ".join("\"" + param + "\" => $" + param for param in params)) + "))"
+#
+#             result += route_template.substitute(
+#                 check_vars = check_vars,
+#                 assign_vars = "\n    ".join("$" + param + " = (" + params[param] + ") " + request_var + "[\"" + param + "\"];" for param in params),
+#                 format = format,
+#                 output = api_controller_call if format == "string" else "json_encode(" + api_controller_call + ")"
+#             )
+#
+#     return result
+
 def define_routes(routes, mode, indentation):
-    route_template = string.Template("""if ($check_vars) {
+    return """<?php
+
+function delegate_route($route) {
+    if (isset($_GET[$route])) {
+        $req_type = "get";
+    }
+    elseif (isset($_POST[$route])) {
+        $req_type = "post";
+    }
+    else {
+        echo "{\\"error\\": \\"Call to undefined route!\\", \\"route\\": \\"".$route."\\"}";
+        exit(0);
+    }
+
+    require_once "api/".$route.".php";
+
+    if ($api_controller->check_route($route, $req_type)) {
+        $api_controller->$route($_GET);
+        exit(0);
+    }
+}
+
+?>"""
+
+def make_api_files(routes):
+    api_file_template = string.Template("""<?php
+
+// called from api.php (included from there) => go from api.php's path
+if (file_exists("controllers/ApiController.php")) {
+    require_once "controllers/ApiController.php";
+}
+// called from here => go from here
+else {
+    require_once "../controllers/ApiController.php";
+}
+
+$$api_controller = new ApiController();
+
+if ($check_vars) {
     $assign_vars
 
     // output format: $format
     echo $output;
-    exit(0);
 }
-""")
 
-    result  = """
-require_once "controllers/ApiController.php";
+?>""")
 
-$api_controller = new ApiController();
-"""
-    indentation = " " * indentation
+    result = {}
 
     for type in routes:
-        result = result + "\n// " + type.upper() + " REQUESTS\n"
         request_var = "$_" + type.upper()
 
         routes_data = routes[type]
@@ -124,14 +204,13 @@ $api_controller = new ApiController();
                 del params["format"]
 
 
-
             check_vars = " && ".join("isset(" + request_var + "[\"" + param + "\"])" for param in params)
-
-            check_vars = "isset(" + request_var + "[\"route\"]) && " + request_var + "[\"route\"] === \"" + route + "\" && " + check_vars
 
             api_controller_call = "$api_controller->" + route + "(array(" + (", ".join("\"" + param + "\" => $" + param for param in params)) + "))"
 
-            result += route_template.substitute(
+            print(api_controller_call)
+
+            result[route + ".php"] = api_file_template.substitute(
                 check_vars = check_vars,
                 assign_vars = "\n    ".join("$" + param + " = (" + params[param] + ") " + request_var + "[\"" + param + "\"];" for param in params),
                 format = format,
@@ -140,6 +219,7 @@ $api_controller = new ApiController();
 
     return result
 
+
 def make_api_controller(routes):
     controller_template = string.Template("""<?php
 
@@ -147,8 +227,16 @@ def make_api_controller(routes):
 
 class ApiController {
 
+    private $$route_types = array(
+        $route_types
+    );
+
     public function __construct() {
 
+    }
+
+    public function route_is_valid($$route, $$type) {
+        return isset($$this->route_types[$$type]);
     }
 
 $define_controller_functions
@@ -168,10 +256,15 @@ $assign_vars
 """)
 
     funcs = ""
+    route_types = {}
+    route_types_keys = []
 
     for type in routes:
         routes_data = routes[type]
         for route in routes_data:
+            route_types[route] = type.lower()
+            route_types_keys.append(route)
+
             params = dict(routes_data[route])
 
             if "format" not in params:
@@ -190,7 +283,10 @@ $assign_vars
                 pre_output = "\"\"" if format == "string" else "array()"
             )
 
+    route_types_keys.sort()
+
     return controller_template.substitute(
+        route_types = ",\n        ".join("\"" + route + "\" => \"" + route_types[route] + "\"" for route in route_types_keys),
         define_controller_functions = funcs
     )
 
@@ -249,10 +345,6 @@ $$db_connector = new $connector_class("$domain", "$user", "$password", "$db_name
 
 ?>""")
 
-    api_template = string.Template("""<?php
-        $define_routes
-?>""")
-
     model_template = string.Template("""<?php
 
 require_once "includes/init.php";
@@ -295,8 +387,9 @@ $class_name::init($$db_connector, "$table_name");
     )
 
     result = {
-        "controllers": {},
-        "includes": {
+        "api":          {},
+        "controllers":  {},
+        "includes":     {
             "init.php":                 db_connector_code,
             "DBConnector.php":          read_file("./data/languages/php/DBConnector.php"),
             "MySQLiDBConnector.php":    read_file("./data/languages/php/MySQLiDBConnector.php"),
@@ -351,14 +444,14 @@ $class_name::init($$db_connector, "$table_name");
     result["models"]["require_all.php"] = require
 
     ##############################################################################################################
-    # API (+ CONTROLLER)
+    # API (=api.php + files in api folder) (+ CONTROLLER)
     if "routes" in config:
         routes_config = config["routes"]
         routing_mode = config["routing"] if "routing" in config else "simple"
 
-        result["index"]["api.php"] = api_template.substitute(
-            define_routes = define_routes(routes_config, routing_mode, 0)
-        )
+        result["index"]["api.php"] = define_routes(routes_config, routing_mode, 0)
+
+        result["api"] = make_api_files(routes_config)
 
         result["controllers"]["ApiController.php"] = make_api_controller(routes_config)
 

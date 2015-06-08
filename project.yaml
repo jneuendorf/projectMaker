@@ -8,13 +8,9 @@ views:
 
 jQuery: 1.11.3
 
-# # possible are: vertical, horizontal, table, box
-# layout: vertical
-
 # more to come
 language: php
 database_connector: mysqli
-
 
 # model name should be singular
 models:
@@ -46,12 +42,7 @@ database:
     password:   ""
     name:       test
 
-# more to come: 'advanced' => frontend routing help
-routing: simple
-
-# get "master_report/:id", :to => "api#master_report", :format => 'json'
 routes:
-    # => api.php?route=get_route1&first_name=ASDF&last_name=BSDF
     get:
         get_route1:
             first_name: string
