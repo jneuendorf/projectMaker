@@ -1,5 +1,7 @@
 title: My Project
 
+# list of all views
+# NOTE: "head" is reserved and must not be used
 views:
     - home
     - events
@@ -13,6 +15,7 @@ language: php
 database_connector: mysqli
 
 # model name should be singular
+# default column type is string
 models:
     user:
         # optional. if not given 's' will be appended to the model name
@@ -42,6 +45,7 @@ database:
     password:   ""
     name:       test
 
+# in PHP all routes go to either api.php?route=ROUTE&... or api/ROUTE.php?...
 routes:
     get:
         get_route1:

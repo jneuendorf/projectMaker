@@ -1,8 +1,8 @@
 import re
 import string
 
+from lib import *
 
-# code_style = "snake case"
 
 def snake_to_camel_case(s):
    return "".join(word.capitalize() for word in s.split("_"))
@@ -17,15 +17,38 @@ def string_to_camel_case(s):
 def string_to_snake_case(s):
     pass
 
-convert_string = None
-convert_case = None
-
-
 def read_file(filename):
     file = open(filename, "r")
     result = file.read()
     file.close()
     return result
+
+def map_type(generalType):
+    generalType = generalType.lower()
+    mapping = {
+        "int":      "integer",
+        "integer":  "integer",
+
+        "string":   "string",
+
+        "double":   "float",
+        "float":    "float",
+        "number":   "float",
+        "real":     "float",
+
+        "bool":     "boolean",
+        "boolean":  "boolean",
+
+        "date":     "integer",
+        "time":     "integer",
+
+        "array":    "array",
+        "object":   "object"
+    }
+
+    return mapping[generalType] if generalType in mapping else "string"
+
+
 
 
 
@@ -36,8 +59,9 @@ def declare_properties(props, indentation):
     template = string.Template(indentation + "// $type\n" + indentation + "$visibility $$$var_name;\n")
 
     for prop in props:
+        print(prop)
         res += template.substitute(
-            type        = prop["type"] if "type" in prop else "...",
+            type        = map_type(prop["type"]) if "type" in prop else "...",
             visibility  = prop["visibility"] if "visibility" in prop else "protected",
             var_name    = prop["name"]
         )
@@ -90,55 +114,6 @@ def define_find_methods(props, indentation):
 def ctor_assignments(props, indentation):
     indentation = " " * indentation
     return "\n".join((indentation + "$this->" + prop["name"] + " = $" + prop["name"] + ";") for prop in props)
-
-
-# def define_routes(routes, mode, indentation):
-#     route_template = string.Template("""if ($check_vars) {
-#     $assign_vars
-#
-#     // output format: $format
-#     echo $output;
-#     exit(0);
-# }
-# """)
-#
-#     result  = """
-# require_once "controllers/ApiController.php";
-#
-# $api_controller = new ApiController();
-# """
-#     indentation = " " * indentation
-#
-#     for type in routes:
-#         result = result + "\n// " + type.upper() + " REQUESTS\n"
-#         request_var = "$_" + type.upper()
-#
-#         routes_data = routes[type]
-#         for route in routes_data:
-#             params = dict(routes_data[route])
-#
-#             if "format" not in params:
-#                 format = "string"
-#             else:
-#                 format = params["format"]
-#                 del params["format"]
-#
-#
-#
-#             check_vars = " && ".join("isset(" + request_var + "[\"" + param + "\"])" for param in params)
-#
-#             check_vars = "isset(" + request_var + "[\"route\"]) && " + request_var + "[\"route\"] === \"" + route + "\" && " + check_vars
-#
-#             api_controller_call = "$api_controller->" + route + "(array(" + (", ".join("\"" + param + "\" => $" + param for param in params)) + "))"
-#
-#             result += route_template.substitute(
-#                 check_vars = check_vars,
-#                 assign_vars = "\n    ".join("$" + param + " = (" + params[param] + ") " + request_var + "[\"" + param + "\"];" for param in params),
-#                 format = format,
-#                 output = api_controller_call if format == "string" else "json_encode(" + api_controller_call + ")"
-#             )
-#
-#     return result
 
 def define_routes(routes, mode, indentation):
     return """<?php
@@ -212,7 +187,7 @@ if ($check_vars) {
 
             result[route + ".php"] = api_file_template.substitute(
                 check_vars = check_vars,
-                assign_vars = "\n    ".join("$" + param + " = (" + params[param] + ") " + request_var + "[\"" + param + "\"];" for param in params),
+                assign_vars = "\n    ".join("$" + param + " = (" + map_type(params[param]) + ") " + request_var + "[\"" + param + "\"];" for param in params),
                 format = format,
                 output = api_controller_call if format == "string" else "json_encode(" + api_controller_call + ")"
             )
@@ -290,6 +265,17 @@ $assign_vars
         define_controller_functions = funcs
     )
 
+def make_navigation(views, indentation):
+    indentation = " " * indentation
+    result = ""
+
+    for view in views:
+        result = result + (indentation + "<div class=\"item\">\n" +
+                          indentation + "    <a href=\"index.php?view=" + view + "\">" + view + "</a>\n" +
+                          indentation + "</div>\n")
+
+    return result
+
 ##################################################################################################################
 ##################################################################################################################
 # MAIN FUNCTION!!                                                                                                #
@@ -297,45 +283,51 @@ $assign_vars
 
 def create_code(config):
 
-    index_template = """<?php
-    // session_start();
-    require_once "includes/functions.php";
+    index_template = string.Template("""<?php
 
-    $page = "home";
+// session_start();
+require_once "includes/functions.php";
 
-    if (isset($_REQUEST['page'])) {
-        $page = $_REQUEST['page'];
-        if (!logged_in() && !in_array($page, array("home", "kontakt", "impressum"))) {
-            $page = "home";
-        }
-    }
+// TODO: ENTER DEFAULT VIEW HERE!
+$$default_view = "home";
 
+if (isset($$_REQUEST["view"])) {
+    $$view = $$_REQUEST["view"];
+}
+else {
+    $$view = $$default_view;
+}
+
+?>
+<!DOCTYPE html>
+<html>
+    <?php
+        require_once "views/head.php";
     ?>
-    <!DOCTYPE html>
-    <html>
-        <?php
-            require_once "views/head.php";
-        ?>
-        <body>
-            <div id="page">
-                <div id="header"></div>
-
-                <div id="content">
-                    <?php
-                        if (file_exists("views/$page.php")) {
-                            require_once "views/$page.php";
-                        }
-                        else {
-                            require_once "views/home.php";
-                        }
-                    ?>
+    <body>
+        <div id="page">
+            <div id="header">
+                <div class="navigation">
+$navigation
                 </div>
-
-                <div id="footer"></div>
             </div>
-        </body>
-    </html>
-"""
+
+            <div id="content">
+                <?php
+                    if (file_exists("views/".$$view.".php")) {
+                        require_once "views/".$$view.".php";
+                    }
+                    else {
+                        require_once "views/".$$default_view.".php";
+                    }
+                ?>
+            </div>
+
+            <div id="footer"></div>
+        </div>
+    </body>
+</html>
+""")
 
     db_connector_template = string.Template("""<?php
 
@@ -353,7 +345,13 @@ require_once "includes/Model.php";
 class $class_name extends AbstractDBModel {
 $declare_properties
 
+    // array
+    protected static $$_column_names = array($column_names);
+    // array
+    protected static $$_column_types = array($column_types);
+
     public function __construct($properties) {
+        parent::__construct();
 $ctor_assignments
     }
 
@@ -404,7 +402,14 @@ $class_name::init($$db_connector, "$table_name");
         "views":    {}
     }
 
-    result["index"]["index.php"] = index_template
+    ##############################################################################################################
+    # INDEX.PHP
+
+
+
+    result["index"]["index.php"] = index_template.substitute(
+        navigation = make_navigation(config["views"] if "views" in config else {}, 24)
+    )
 
     ##############################################################################################################
     # MODELS
@@ -412,20 +417,22 @@ $class_name::init($$db_connector, "$table_name");
         model_config = config["models"][model_name]
 
         class_name = snake_to_camel_case(model_name)
-        table_name = class_name + "s"
+        # table_name = model_name + "s"
+        #
+        # for item in model_config:
+        #     if "plural" in item:
+        #         table_name = item["plural"]
+        #         model_config.remove(item)
+        #         break
 
-        for item in model_config:
-            if "plural" in item:
-                table_name = item["plural"]
-                model_config.remove(item)
-                break
-
-        table_name = table_name.lower()
+        table_name = table_name_for_model(model_name, model_config).lower()
 
         model_code = model_template.substitute(
             class_name                  = class_name,
             declare_properties          = declare_properties(model_config, 4),
             properties                  = properties(model_config),
+            column_names                = ", ".join("\"" + item["name"] + "\"" for item in model_config),
+            column_types                = ", ".join("\"" + (map_type(item["type"]) if "type" in item else "string") + "\"" for item in model_config),
             ctor_assignments            = ctor_assignments(model_config, 8),
             define_getters_and_setters  = define_getters_and_setters(model_config, 4),
             define_find_methods         = define_find_methods(model_config, 4),

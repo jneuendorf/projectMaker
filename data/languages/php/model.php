@@ -115,15 +115,18 @@ abstract class AbstractDBModel implements Model {
             static::$_table_name = $table_name;
         }
 
-        $field_data = static::$_db_connector->force_query("SELECT * FROM ".static::$_table_name." LIMIT 1;")->fetch_fields();
+        if (count(static::$_column_names) === 0) {
+            $field_data = static::$_db_connector->force_query("SELECT * FROM ".static::$_table_name." LIMIT 1;")->fetch_fields();
 
-        for ($i = 0; $i < count($field_data); $i++) {
-            $field_datum = $field_data[$i];
-            if (isset($field_datum->name)) {
-                array_push(static::$_column_names, $field_datum->name);
-            }
-            else {
-                array_push(static::$_column_names, $field_datum["name"]);
+            for ($i = 0; $i < count($field_data); $i++) {
+                $field_datum = $field_data[$i];
+                var_dump($field_data);
+                if (isset($field_datum->name)) {
+                    array_push(static::$_column_names, $field_datum->name);
+                }
+                else {
+                    array_push(static::$_column_names, $field_datum["name"]);
+                }
             }
         }
 
@@ -142,6 +145,10 @@ abstract class AbstractDBModel implements Model {
 
     public static function get_columns() {
         return static::$_column_names;
+    }
+
+    public static function get_types() {
+        return static::$_column_types;
     }
 
     private static function objects_from_all_fetched($fetched) {
