@@ -85,25 +85,6 @@ $table_props
 -- UNLOCK TABLES;
 """)
 
-    # `report_method` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-    # `name_eng` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-    # `name_deu` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-    # `rollover_eng` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-    # `rollover_deu` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-    # `needs_authentication` tinyint(1) DEFAULT NULL,
-    # `sequence` int(11) DEFAULT NULL,
-    # `reportable_type` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-    # `created_at` datetime NOT NULL,
-    # `updated_at` datetime NOT NULL,
-    # `precision` int(11) DEFAULT NULL,
-    # `kpi_group_id` int(11) DEFAULT NULL,
-    # `unit` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-    # `aggregation` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-    # `category` text COLLATE utf8_unicode_ci,
-    # `kind_id` int(11) DEFAULT NULL,
-    # `kind_type` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
-
-
     table_prop_template = string.Template("    `$col_name` $type COLLATE utf8_unicode_ci DEFAULT NULL,\n")
 
     result = {}
@@ -173,6 +154,8 @@ code_data = module.create_code(config)
 
 ##################################################################################################################
 # WRITE CODE FILES
+print("....creating code files...")
+
 for folder in code_data:
     code_dict = code_data[folder]
     if folder == "index":
@@ -195,7 +178,6 @@ for folder in code_data:
 # WRITE SQL FILES
 print("....creating sql files...")
 
-# TODO
 sql_data = create_sql(config["models"] if "models" in config else {})
 
 for filename in sql_data:
